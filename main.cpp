@@ -1,20 +1,16 @@
-#include <iostream>
+#include <cstdint>
 #include <cstdlib>
 #include <iomanip>
-#include <cstdint>
+#include <iostream>
 
-#include <omp.h>
 #include <mpi.h>
+#include <omp.h>
 
 using std::int64_t;
 
-double f(double a)
-{
-    return 4.0 / (1.0 + a * a);
-}
+double f(double a) { return 4.0 / (1.0 + a * a); }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     MPI_Init(&argc, &argv);
 
     auto comm = MPI_COMM_WORLD;
@@ -28,18 +24,15 @@ int main(int argc, char **argv)
 #pragma omp parallel
 #pragma omp master
     {
-        std::cout << rank << ": Num threads = " << omp_get_num_threads() << std::endl;
+        std::cout << rank << ": Num threads = " << omp_get_num_threads()
+                  << std::endl;
     }
 
     int64_t n;
-    if (rank == 0)
-    {
-        if (argc <= 1)
-        {
+    if (rank == 0) {
+        if (argc <= 1) {
             n = 100;
-        }
-        else
-        {
+        } else {
             n = std::atoll(argv[1]);
         }
     }
@@ -55,10 +48,8 @@ int main(int argc, char **argv)
 
     double sum = 0.0;
 
-#pragma omp parallel for reduction(+ \
-                                   : sum) schedule(static, 2000)
-    for (int64_t i = 0; i < num_local; i++)
-    {
+#pragma omp parallel for reduction(+ : sum) schedule(static, 2000)
+    for (int64_t i = 0; i < num_local; i++) {
         sum += f(h * ((i * size64 + rank64 + 1) - 0.5));
     }
 
@@ -67,9 +58,9 @@ int main(int argc, char **argv)
     double pi = 0.0;
     MPI_Reduce(&partial_pi, &pi, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
 
-    if (rank == 0)
-    {
-        std::cout << std::setprecision(16) << "PI is something like: " << pi << std::endl;
+    if (rank == 0) {
+        std::cout << std::setprecision(16) << "PI is something like: " << pi
+                  << std::endl;
     }
 
     MPI_Finalize();
